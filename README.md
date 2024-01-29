@@ -21,7 +21,8 @@ This project is made by Adrián and Gabriel for the Multimedia Programming and M
 
 ## License
 
-[MIT]Copyright (c) 2024 Carlos Ballesteros Velasco
+[MIT Korge] (https://es.wikipedia.org/wiki/Licencia_MIT)
+Copyright (c) 2024 Carlos Ballesteros Velasco
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
