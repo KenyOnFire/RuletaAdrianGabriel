@@ -17,7 +17,7 @@ This project is made by Adrián and Gabriel for the Multimedia Programming and M
  - [Firebase Kotlin SDK](https://github.com/GitLiveApp/firebase-kotlin-sdk)
  - [Korge supporter @XenoTactic YT](https://www.youtube.com/@XenoTactic)
  - [Korge supporter @Kietyo GH](https://github.com/Kietyo)
- - [Creator of korge @soywiz GH](https://github.com/Kietyo)
+ - [Creator of korge @soywiz GH](https://github.com/soywiz)
 
 
 #### Made with ❤️ by Adrian and Gabriel
