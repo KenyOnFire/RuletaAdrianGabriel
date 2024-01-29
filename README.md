@@ -19,8 +19,5 @@ This project is made by Adrián and Gabriel for the Multimedia Programming and M
  - [Korge supporter @Kietyo GH](https://github.com/Kietyo)
  - [Creator of korge @soywiz GH](https://github.com/soywiz)
 
-## License
-
-[MIT](https://choosealicense.com/licenses/mit/)
 
 #### Made with ❤️ by Adrian and Gabriel
