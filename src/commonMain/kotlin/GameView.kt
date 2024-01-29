@@ -382,7 +382,7 @@ class GameView(
         }
 
         image(resourcesVfs["reset.png"].readBitmap()).size(Size(92,92)).xy(192, 930).onClick {
-            sceneContainer.changeTo { UserSelector() }
+            //TODO: CREAR BOTON DE RESTAURAR ULTIMA APUESTA
         }
 
         //// OOOOLLDDDD METHODS FOR ANIMATIONS
