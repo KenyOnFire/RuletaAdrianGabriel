@@ -1,8 +1,8 @@
 import kotlin.random.*
 
 class GameModel(
-    var money: Int = 0,
-    var userName: String = ""
+    var userName: String = "",
+    var money: Int = 0
 ) {
     companion object {
         val NCASILLAS = 37
@@ -13,6 +13,7 @@ class GameModel(
         bets: List<Bet>
     ): GameResult {
         val numWinner = Random.nextInt(NCASILLAS)
+//        val numWinner = 17
         val result = GameResult(numWinner, bets)
         money -= bets.sumOf { it.totalPrice }
         money += result.wonAmount

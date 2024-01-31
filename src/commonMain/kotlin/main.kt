@@ -6,11 +6,14 @@ import korlibs.korge.scene.*
 import korlibs.math.geom.*
 import mvc.*
 
-expect object firebaseManager {
+expect object FirebaseManagerObj {
     suspend fun startFirebaseAuth(): FirebaseAuth?
-    suspend fun testConnection()
-    suspend fun startFirebaseRealtimeDB(): FirebaseDatabase?
+    suspend fun getDisplayName()
+    suspend fun startFirebaseRealtimeDB()
     suspend fun startFB()
+    suspend fun isJVMorJS():Boolean
+    suspend fun createUser(email: String, displayName: String)
+    suspend fun getActualUserDb(): String
 }
 
 suspend fun main() = Korge(
@@ -23,7 +26,19 @@ suspend fun main() = Korge(
     controller.launchFirebase()
     val sceneContainer = sceneContainer()
 //    controller.signOutUser()
-    sceneContainer.changeTo { Menu(controller) }
+    println(FirebaseManagerObj.isJVMorJS())
+    if (!FirebaseManagerObj.isJVMorJS()){
+        sceneContainer.changeTo { Menu(controller) }
+        return@Korge
+    }
+
+    sceneContainer.changeTo { Login(controller) }
+
+//    val gameModel = GameModel()
+//    gameModel.userName = "AdrianQR"
+//    gameModel.money = 10000
+//    sceneContainer.changeTo { GameView(gameModel) }
+
 //    TestFirebase().test()
 //    sceneContainer.changeTo { UserSelector() }
 //    val user = Usuario("AdrianQR", 200)
@@ -31,10 +46,10 @@ suspend fun main() = Korge(
 //    gameModel.userName = "AdrianQR"
 //    gameModel.money = 10000
 //    sceneContainer.changeTo { GameView(gameModel) }
-    val userGetted = controller.getUser()
-    if (userGetted != null) {
-        sceneContainer.changeTo { GameView(GameModel(userGetted.nombreUsuario, userGetted.dineroActual)) }
-    } //else {
+//    val userGetted = controller.getUser()
+//    if (userGetted != null) {
+//        sceneContainer.changeTo { GameView(GameModel(userGetted.nombreUsuario, userGetted.dineroActual)) }
+    //} //else {
 //        sceneContainer.changeTo{LoginTestWindow(controller)}
 //    }
 

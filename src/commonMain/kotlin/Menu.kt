@@ -1,6 +1,7 @@
 import korlibs.image.bitmap.*
 import korlibs.image.format.*
 import korlibs.io.file.std.*
+import korlibs.korge.annotations.*
 import korlibs.korge.input.*
 import korlibs.korge.scene.*
 import korlibs.korge.ui.*
@@ -15,9 +16,12 @@ class Menu(var controller: Controller) : Scene() {
     private var NBOTONESARRIBA:Int= 2
     private var userIsRegisterOrLogged:Boolean = false
 
+    @OptIn(KorgeExperimental::class)
     override suspend fun SContainer.sceneMain() {
-        val userGetted = controller.getUser()
-        if (userGetted != null){
+        controller.getUserRealtimeDatabase()
+        var user = controller.getUser()
+        println(user)
+        if (user != null){
             userIsRegisterOrLogged = true
 
         }
@@ -51,13 +55,26 @@ class Menu(var controller: Controller) : Scene() {
                 // Cargamos la imagen una a una en la vista del contenedor
                 val image = image(resourcesVfs["botonMenu.png"].readBitmap()).scale(0.60).position(xCoordinate, yCoordinate)
                 when(n) {
-                    0 -> text("JUGAR",50).xy(98, 60)
+                    0 -> text("JUGAR",50).xy(98, 60).onClick {
+                        if (user != null) {
+
+                            sceneContainer.changeTo { GameView(GameModel(user!!.nombreUsuario, user!!.dineroActual)) }
+                        } else {
+                            sceneContainer.changeTo{GameView(GameModel("Invitado", 100500))}
+                        }
+                    }
                     1 -> {
-                        text(if userIsRegisterOrLogged "LOGOUT" else "LOGIN",50).xy(558, 60).onClick{
+                        text(if (userIsRegisterOrLogged) "LOGOUT" else "LOGIN",50).xy(558, 60).onClick{
                             if (userIsRegisterOrLogged) {
                                 controller.signOutUser()
+                                user = null
+                                userIsRegisterOrLogged = false
                                 sceneContainer.changeTo{Menu(controller)}
+
                             } else {
+//                                controller.setUser("newtest@test.com", "test123")
+
+                                println("TODO: CREAR LOGIN SCENE")
                                 sceneContainer.changeTo { Login(controller) }
                             }
                         }

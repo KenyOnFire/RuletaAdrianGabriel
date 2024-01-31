@@ -2,6 +2,7 @@ import korlibs.image.bitmap.*
 import korlibs.image.color.*
 import korlibs.image.format.*
 import korlibs.io.async.*
+import korlibs.io.async.async
 import korlibs.io.file.std.*
 import korlibs.korge.animate.*
 import korlibs.korge.annotations.*
@@ -10,8 +11,10 @@ import korlibs.korge.scene.*
 import korlibs.korge.tween.*
 import korlibs.korge.ui.*
 import korlibs.korge.view.*
+import korlibs.korge.view.align.*
 import korlibs.math.geom.*
 import korlibs.math.interpolation.*
+import kotlinx.coroutines.*
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
@@ -23,6 +26,8 @@ class GameView(
     private val bets = MutableBets(game.money)
     private var actualMoney = game.money
     private var actualUsername = game.userName
+//    private var actualMoney = 100500
+//    private var actualUsername = "AdriQR"
     private val textApuestas = arrayListOf<Text>()
     private val imageFichaApuestas = arrayListOf<Image>()
     private val fichasApostadasViewList = arrayListOf<View>()
@@ -31,7 +36,6 @@ class GameView(
     private lateinit var viewRuleta: Image
     private lateinit var viewBola: Image
     private var ruletaActiva: Boolean = false
-    private var cordinatePosWin = -0
     @OptIn(KorgeExperimental::class)
     override suspend fun SContainer.sceneMain() {
         val resourceWallpaper = resourcesVfs["fondo.png"].readBitmap()
@@ -171,8 +175,10 @@ class GameView(
                 listaResultadosNumeros.removeAt(0)
             }
 
-
-            // CONTINUAR MARGENES CON ESTA LOGICA...
+//            for (i in 0..5){
+//                listaResultadosNumeros.add(i)
+//            }
+            // TESTEAR MARGENES DE LOS NUMEROS
             containerResultados.container {
                 listaResultadosNumeros.forEachIndexed { index, i ->
                     val isRed: Boolean = when (i) {
@@ -180,18 +186,20 @@ class GameView(
                         else -> false
                     }
                     container {
-                        solidRect(50,50, if (isRed) Colors.RED else Colors.WHITE)
-                        text(
+                        val boxNum = solidRect(50,50, if (isRed) Colors.RED else Colors.WHITE)
+                        val textNum = text(
                             i.toString(),
                             35,
                             if (isRed) Colors.WHITE else Colors.BLACK
                         )
-                    }.position((index * 130)/2, 180)
-//                   .position(x = if(i >= 9) (index * 120)/2 else(index * 124)/2, y = 180) // Antigua logica
+                        textNum.centerOn(
+                            boxNum
+                        )
+                        textNum.x = if (i >= 20.0) 7.0 else 11.5
+                        textNum.y = 7.0
+                    }.position((index * 120)/2, 160)
                 }
             }.position(1300,0)
-
-
 
             for (n in 0 until NFICHAS){
                 textApuestas[n].text = "0"
@@ -200,7 +208,6 @@ class GameView(
                 fichasApostadas.removeChildAt(NFICHAS)
             }
 
-//            textMoney.text = "Dinero ${actualMoney}"
             fichasApostadasClass.groupBy { it.num }
                 .mapValues { it.value.size }
                 .toList()
@@ -217,8 +224,7 @@ class GameView(
                                         image(resources.fichaImages[num]).scale(0.18).xy(xPosition, yPosition)
                                     )
                                 }
-
-                            }else{
+                            } else{
                                 image(resources.fichaImages[num]).scale(0.18).xy(num * 57 + 280, 130)
                             }
                         }.name("FichaApuestaContenedor"))
@@ -229,44 +235,44 @@ class GameView(
         // Creamos la funcion makeDraggable para asignarle el movimiento a la imagen de la ficha
         fun makeDraggable(fichaN: Int, image: View) {
             image.mouse.down {
-                val fichaApostada = image.clone()
-                image.parent?.addChild(fichaApostada)
-                fichasApostadasViewList += fichaApostada
-                var casillaApostada: Int? = null
+                if (!ruletaActiva) {
+                    val fichaApostada = image.clone()
+                    image.parent?.addChild(fichaApostada)
+                    fichasApostadasViewList += fichaApostada
+                    var casillaApostada: Int? = null
+                    fichaApostada.draggableCloseable { info ->
+                        if (info.end) {
+                            val (distanciaCercana, casillaCercana) = coordenadas
+                                .map { it.pos.distanceTo(info.viewNextXY) to it }.minBy { it.first }
 
-                fichaApostada.draggableCloseable { info ->
-                    if (info.end) {
-                        val (distanciaCercana, casillaCercana) = coordenadas
-                            .map { it.pos.distanceTo(info.viewNextXY) to it }.minBy { it.first }
-
-                        if (casillaApostada != null) {
-                            bets.desapostar(casillaApostada!!, Chip(fichaN))
-                            fichasApostadasClass.remove(Chip(fichaN))
-                            actualMoney += Chip(fichaN).price
-                        }
-                        if ( actualMoney - Chip(fichaN).price < 0 ){
-                            fichaApostada.removeFromParent()
-//                            error("No podemos apostar más")
-                        } else {
-                            if (distanciaCercana > 50) {
-                                fichaApostada.simpleAnimator.sequence {
-                                    tween(fichaApostada::pos[image.pos])
-                                    hide(fichaApostada, time = 0.1.seconds)
-                                    removeFromParent(fichaApostada)
-                                    block { fichasApostadasViewList.remove(fichaApostada) }
-                                }
-                            } else {
-                                fichaApostada.simpleAnimator.tween(fichaApostada::pos[casillaCercana.pos])
-                                fichasApostadasClass += Chip(fichaN)
-                                bets.apostar(casillaCercana.num, Chip(fichaN))
-                                casillaApostada = casillaCercana.num
-                                actualMoney -= Chip(fichaN).price
-
+                            if (casillaApostada != null) {
+                                bets.desapostar(casillaApostada!!, Chip(fichaN))
+                                fichasApostadasClass.remove(Chip(fichaN))
+                                actualMoney += Chip(fichaN).price
                             }
-                        }
 
-                        textMoney.text = "Dinero: ${actualMoney}$"
-                        updateApuestasText()
+                            if (actualMoney - Chip(fichaN).price < 0) {
+                                fichasApostadasViewList.remove(fichaApostada)
+                                fichaApostada.removeFromParent()
+                            } else {
+                                if (distanciaCercana > 50) {
+                                    fichaApostada.simpleAnimator.sequence {
+                                        tween(fichaApostada::pos[image.pos])
+                                        hide(fichaApostada, time = 0.1.seconds)
+                                        removeFromParent(fichaApostada)
+                                        block { fichasApostadasViewList.remove(fichaApostada) }
+                                    }
+                                } else {
+                                    fichaApostada.simpleAnimator.tween(fichaApostada::pos[casillaCercana.pos])
+                                    fichasApostadasClass += Chip(fichaN)
+                                    bets.apostar(casillaCercana.num, Chip(fichaN))
+                                    casillaApostada = casillaCercana.num
+                                    actualMoney -= Chip(fichaN).price
+                                }
+                            }
+                            textMoney.text = "Dinero: ${actualMoney}$"
+                            updateApuestasText()
+                        }
                     }
                 }
             }
@@ -290,7 +296,6 @@ class GameView(
         }
 
         fun resetGame(result: GameResult) {
-
             for (n in 0 until GameModel.NCASILLAS) {
                 bets.retirarApuestas(n)
             }
@@ -303,56 +308,94 @@ class GameView(
             for (n in 0..imageFichaApuestas.size ){
                 fichasApostadas.removeChildAt(NFICHAS)
             }
-
-//            for (i in fichasApostadasClass){
             fichasApostadasClass.removeAll(fichasApostadasClass)
-//            }
+            fichasApostadasViewList.removeAll(fichasApostadasViewList)
             updateApuestasText()
-//            while (viewBola.speed > 0){
-//                delay(250.milliseconds)
-//            }
         }
 
-        fun genCordenateByWin(winNumber: Int, lastPositionRuleta:Int):Int{
-
-            val ruletaArrayOrdenada = intArrayOf(0, 32, 15, 19, 4, 21, 2, 25, 17, 34, 6, 27, 13, 36, 11, 30, 8, 23, 10, 5, 24, 16, 33, 1, 20, 14, 31, 9, 22, 18, 29, 7, 28, 12, 35, 3, 26)
+        fun genCoordinateByWin(winNumber: Int, lastPositionRuleta: Int): Int {
+            var ruletaArrayOrdenada = intArrayOf(0, 32, 15, 19, 4, 21, 2, 25, 17, 34, 6, 27, 13, 36, 11, 30, 8, 23, 10, 5, 24, 16, 33, 1, 20, 14, 31, 9, 22, 18, 29, 7, 28, 12, 35, 3, 26)
             val position = ruletaArrayOrdenada.indexOf(winNumber)
+
             var rotationDegrees = (position * 10) - 2
+
             if (position >= ruletaArrayOrdenada.size / 2) {
                 rotationDegrees -= 5
             }
-            rotationDegrees += lastPositionRuleta
+
+            rotationDegrees = ((rotationDegrees + lastPositionRuleta + 360) % 360 - 360)
             return rotationDegrees
-//            ruletaArrayOrdenada += intArrayOf(2, 27) + (30..36).toList().toTypedArray() + intArrayOf(1, 28, 29)
         }
 
-        // ARREGLAR ANIMACION DE ESTO...
-        suspend fun animationSpinRoulette(viewImg:Image, grados: IntArray, maxLoop:Int, lastPosition:Int) {
-            for (i in 0..maxLoop){
-                for (gr in grados) {
-                    tween(viewImg::rotation[gr.degrees], time = (i * 0.3).seconds, easing = Easing.LINEAR)
-                }
+        fun calculateTotalLoopTime(maxLoop: Int, speedFactor: Double): Double {
+            val dynamicTime = 0.5 * (maxLoop + 1) + 3.5
+            val totalSpeed = dynamicTime * maxLoop * speedFactor
+            return when {
+                totalSpeed in 0.0..0.825 -> totalSpeed + 2.00001000
+                else -> totalSpeed
             }
-            tween(viewImg::rotation[(lastPosition).degrees], time = (maxLoop * 0.9).seconds, easing = Easing.LINEAR)
+        }
+
+        fun calculateSpeedFactor(lastPosition: Int): Double {
+            return 1.0 / (lastPosition + 1)
+        }
+
+        suspend fun animationSpinRoulette(viewImg: Image, viewBola: Image, maxLoop: Int, lastPosition: Int, numWinner:Int) {
+            val speedFactor = calculateSpeedFactor(lastPosition)
+            val totalLoopTime = calculateTotalLoopTime(maxLoop, speedFactor)
+            coroutineScope {
+                val imgJob = async {
+                    repeat(maxLoop) {
+                        val dynamicTime = 0.5 * (it / 2) + 0.5
+                        viewImg.rotation = 0.degrees
+                        tween(viewImg::rotation[360.degrees].denormalized(), time = dynamicTime.seconds, easing = Easing.LINEAR)
+                    }
+                    viewImg.rotation = 1.degrees
+                    viewImg.tween(time = totalLoopTime.seconds, easing = Easing.EASE_OUT) {
+                        viewImg.rotation = (it * lastPosition).degrees
+                    }
+                }
+                val bolaJob = async {
+                    repeat(maxLoop + 1) {
+                        val dynamicTime = 0.5 * (it / 2) + 1.0
+                        viewBola.rotation = (-0).degrees
+                        tween(viewBola::rotation[(-360).degrees].denormalized(), time = dynamicTime.seconds, easing = Easing.LINEAR)
+                    }
+                    viewBola.tween(time = (totalLoopTime+1).seconds, easing = Easing.EASE_OUT) {
+                        viewBola.rotation = (it * genCoordinateByWin(numWinner, lastPosition)).degrees
+                    }
+                }
+                imgJob.await()
+                bolaJob.await()
+            }
         }
         suspend fun spinRoulette(winNumber: Int){
-            val range1 = 0..70
-            val range2 = 290..359
+            val range1 = 80..130
+            val range2 = 200..300
             val randomPositionRoulette = when ((0..1).random()) {
                 0 -> range1.random()
                 else -> range2.random()
             }
             animationSpinRoulette(
                 viewImg = viewRuleta,
-                grados = intArrayOf((+40), (+120), (+220), (+290)),
+                viewBola = viewBola,
                 maxLoop = 3,
-                lastPosition = randomPositionRoulette
+                lastPosition = randomPositionRoulette,
+                numWinner = winNumber
             )
         }
 
         suspend fun jugar() {
             // Fase 2: La ruleta gira
             ruletaActiva = true
+            for (indexFicha in (0 until fichasApostadasViewList.size)){
+                val ficha = fichasApostadasViewList[indexFicha]
+
+                val newFicha = ficha.clone()
+                fichasApostadasViewList[indexFicha] = newFicha
+                ficha.removeFromParent()
+                addChild(newFicha)
+            }
             val result = game.girarRuleta(bets.getBets())
 
 //            val animRul =
@@ -370,19 +413,23 @@ class GameView(
 //            views.alert("(DEBUG) El numero ganador es ${result.numWinner}")
             //delay(2.seconds)
             listaResultadosNumeros.add(result.numWinner)
-            resetGame(result)
             ruletaActiva = false
+            resetGame(result)
+
             //sceneContainer.changeTo { MyScene(game) }
         }
 
         image(resourcesVfs["play.png"].readBitmap()).size(Size(150,150)).xy(30,880).onClick {
             if (!ruletaActiva){
+//                for (i in 0..8){
+//                    jugar()
+//                }
                 jugar()
             }
         }
 
         image(resourcesVfs["reset.png"].readBitmap()).size(Size(92,92)).xy(192, 930).onClick {
-            sceneContainer.changeTo { UserSelector() }
+            //TODO: CREAR BOTON DE RESTAURAR ULTIMA APUESTA
         }
 
         //// OOOOLLDDDD METHODS FOR ANIMATIONS

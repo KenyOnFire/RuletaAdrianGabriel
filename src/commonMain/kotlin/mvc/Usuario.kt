@@ -4,4 +4,4 @@ import kotlinx.serialization.Serializable
 
 // Modelo de Usuario
 @Serializable
-data class Usuario(val nombreUsuario: String, val dineroActual: Int)
+data class Usuario(var nombreUsuario: String, val dineroActual: Int)
