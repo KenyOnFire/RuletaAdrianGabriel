@@ -2,22 +2,21 @@ import kotlin.random.*
 
 class GameModel(
     var userName: String = "",
-    var money: Int = 0
+    var money: Int = 100000
 ) {
     companion object {
-        val NCASILLAS = 37
+        val NCASILLAS = 50
 
     }
-
     fun girarRuleta(
         bets: List<Bet>
-    ): GameResult {
-        val numWinner = Random.nextInt(NCASILLAS)
-//        val numWinner = 17
+    ): Pair<Int,Int> {
+        val numWinner = Random.nextInt(NCASILLAS - 14)
         val result = GameResult(numWinner, bets)
         money -= bets.sumOf { it.totalPrice }
-        money += result.wonAmount
-        return result
+        val wonAmount = result.wonAmount * Random.nextInt(2, 5)
+        money += wonAmount
+        return Pair(numWinner, wonAmount)
     }
 }
 
@@ -29,9 +28,7 @@ data class Chip(val num: Int) {
 }
 
 data class Bet(
-    /** Número al que apuestas */
     val casillaNum: Int,
-    /** Fichas apostadas */
     val chips: List<Chip>,
 ) {
     val totalPrice: Int get() = chips.sumOf { it.price }
@@ -46,10 +43,6 @@ class MutableBets(
 
     fun getBets(): List<Bet> {
         return apostadoCasillas.filter { it.chips.isNotEmpty() }
-    }
-
-    fun getTotalPriceEnNum(num: Int): Int {
-        return apostadoCasillas[num].totalPrice
     }
 
     fun desapostar(num: Int, chip: Chip) {

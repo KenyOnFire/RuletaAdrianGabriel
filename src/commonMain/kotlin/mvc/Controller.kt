@@ -8,28 +8,40 @@ class Controller {
 
     private lateinit var firebasemanager: FirebaseManager
 
-    private lateinit var actualUser: Usuario
-
-     suspend fun launchFirebase() {
-         FirebaseManagerObj.startFB()
-         FirebaseManagerObj.startFirebaseRealtimeDB()
-         auth = FirebaseManagerObj.startFirebaseAuth()!!
-         firebasemanager = FirebaseManager(auth)
-     }
+    suspend fun launchFirebase() {
+        FirebaseManagerObj.startFB()
+        FirebaseManagerObj.startFirebaseRealtimeDB()
+        auth = FirebaseManagerObj.startFirebaseAuth()!!
+        firebasemanager = FirebaseManager(auth)
+    }
 
     suspend fun setNewUserRealtimeDatabase(email: String, displayName: String){
-        FirebaseManagerObj.createUser(email,displayName)
+        FirebaseManagerObj.createUser(displayName, 100000, email)
         firebasemanager.user.nombreUsuario = displayName
+        firebasemanager.user.dineroActual = 100000
+    }
+
+    suspend fun getAllUsers(): List<Pair<String, String>> {
+        val names = FirebaseManagerObj.getAllUsersDb("displayname")
+        val money = FirebaseManagerObj.getAllUsersDb("actualMoney")
+        return names.zip(money)
+    }
+
+    suspend fun modifyMoneyUser(money:Int) {
+        FirebaseManagerObj.modifyActualMoney(money.toString())
+
     }
 
     suspend fun getUserRealtimeDatabase(){
-        firebasemanager.user.nombreUsuario = FirebaseManagerObj.getActualUserDb()
+        firebasemanager.user.nombreUsuario = FirebaseManagerObj.getActualUserDb("displayname")
+        firebasemanager.user.dineroActual = FirebaseManagerObj.getActualUserDb("actualMoney").toInt()
     }
 
-    fun getUser(): Usuario? {
-        if (!firebasemanager.readUser()) {
-            return null
+    suspend fun getUser(): Usuario {
+        if (firebasemanager.readUser().nombreUsuario == "...") {
+            return Usuario("Invitado", 100000)
         }
+
         return firebasemanager.user
     }
 
@@ -50,6 +62,11 @@ class Controller {
 
     suspend fun signOutUser() {
         auth.signOut()
+        firebasemanager.user = Usuario("Invitado", 100000)
+    }
+
+    suspend fun getIsJVMorJS():Boolean {
+        return FirebaseManagerObj.isJVMorJS()
     }
 //    suspend fun leerUsuario(): List<Usuario> {
 //        val conjuntoUsuarios = jsonmanager.readUsers()

@@ -1,0 +1,433 @@
+//DESAPOSTAR
+
+var posActual = ""
+if (casillaApostada == 37){
+    for (i in 1..34 step 3){
+        actualMoney += Chip(fichaN).price
+        bets.desapostar(i, Chip(fichaN))
+    }
+    posActual = "bot"
+}
+if (casillaApostada == 38) {
+    for (i in 2..35 step 3){
+        actualMoney += Chip(fichaN).price
+        bets.desapostar(i, Chip(fichaN))
+    }
+    posActual = "mid"
+}
+if (casillaApostada == 39) {
+    for (i in 3..36 step 3) {
+        actualMoney += Chip(fichaN).price
+        bets.desapostar(i, Chip(fichaN))
+    }
+    posActual = "top"
+}
+
+val posicion = Pair(Chip(fichaN).price, listaApuestasCantidadClones[posActual]?.get(fichaN) ?: 0)
+listaApuestasCantidadClones[posActual]?.set(fichaN, (listaApuestasCantidadClones[posActual]?.get(fichaN)?.minus(1)) ?: 0)
+
+println(posicion)
+//val conjunto = conjuntoMapa[posicion]
+val conjunto = conjuntoMapa.remove(posicion)
+conjunto?.forEach { elemento ->
+    image.parent?.removeChild(elemento)
+    println("Elemento: $elemento")
+}
+eliminarConjunto(posicion)
+
+
+
+
+
+// APOSTAR
+
+val conjunto = mutableListOf<View>()
+if (casillaApostada == 37){
+    listaApuestasCantidadClones["bot"]?.set(fichaN, (listaApuestasCantidadClones["bot"]?.get(fichaN)?.plus(1)) ?: 0)
+    val newFicha = listaApuestasCantidadClones["bot"]?.get(fichaN) ?: 0
+    for (i in 1..34 step 3){
+        val posicion = Pair(Chip(fichaN).price, newFicha)
+        fichaApostada.position(coordenadas[i].pos.x, coordenadas[i].pos.y)
+        val clonFicha = fichaApostada.clone().name("2to1bot${newFicha-1}-$fichaN")
+        conjunto.add(clonFicha)
+        agregarConjunto(posicion,conjunto)
+        image.parent?.addChild(clonFicha)
+        bets.apostar(i, Chip(fichaN))
+        actualMoney -= Chip(fichaN).price
+    }
+}
+if (casillaApostada == 38){
+    listaApuestasCantidadClones["mid"]?.set(fichaN, (listaApuestasCantidadClones["mid"]?.get(fichaN)?.plus(1)) ?: 0)
+    val newFicha = listaApuestasCantidadClones["mid"]?.get(fichaN) ?: 0
+    for (i in 2..35 step 3){
+        val posicion = Pair(Chip(fichaN).price, newFicha)
+        fichaApostada.position(coordenadas[i].pos.x, coordenadas[i].pos.y)
+        val clonFicha = fichaApostada.clone().name("2to1mid$newFicha-$fichaN")
+        conjunto.add(clonFicha)
+        agregarConjunto(posicion,conjunto)
+        image.parent?.addChild(clonFicha)
+        bets.apostar(i, Chip(fichaN))
+        actualMoney -= Chip(fichaN).price
+
+    }
+}
+if (casillaApostada == 39){
+    listaApuestasCantidadClones["top"]?.set(fichaN, (listaApuestasCantidadClones["top"]?.get(fichaN)?.plus(1)) ?: 0)
+    val newFicha = listaApuestasCantidadClones["top"]?.get(fichaN) ?: 0
+    for (i in 3..36 step 3){
+        val posicion = Pair(Chip(fichaN).price, newFicha)
+        fichaApostada.position(coordenadas[i].pos.x, coordenadas[i].pos.y)
+        val clonFicha = fichaApostada.clone().name("2to1top$newFicha-$fichaN")
+        conjunto.add(clonFicha)
+        agregarConjunto(posicion,conjunto)
+        image.parent?.addChild(clonFicha)
+        bets.apostar(i, Chip(fichaN))
+        actualMoney -= Chip(fichaN).price
+
+    }
+}
+
+
+
+
+
+            if (!ruletaActiva) {
+                val fichaApostada = image.clone()
+                val objFicha = FichaView(fichaApostada, fichaN, null)
+                image.parent?.addChild(objFicha.viewFicha)
+//                objVwFichaApuestas.add(objFicha)
+//                imageFichaApuestas.add(fichaApostada)
+                var casillaApostada: Int? = null
+                objFicha.viewFicha.draggableCloseable { info ->
+
+                    if (info.end) {
+                        val (distanciaCercana, casillaCercana) = coordenadas
+                            .map { it.pos.distanceTo(info.viewNextXY) to it }.minBy { it.first }
+                        objFicha.casilla = casillaCercana
+
+                        // ...desapostar
+                        if (casillaApostada != null) {
+                            bets.desapostar(casillaApostada!!, Chip(fichaN))
+                            fichasApostadasObject.remove(Chip(fichaN))
+
+//                            imageFichaApuestas.remove(fichaApostada)
+                            actualMoney += Chip(fichaN).price
+                            println("Desapostar $casillaApostada")
+                            //image.parent?.removeChild(objFicha.viewFicha)
+                            objVwFichaApuestas.remove(objFicha)
+                            println(listaApuestasCantidadClones)
+                        }
+                        // desapostar...
+
+                        if (actualMoney - Chip(fichaN).price < 0) {
+//                            imageFichaApuestas.remove(fichaApostada)
+                            fichaApostada.removeFromParent()
+                        } else {
+                            // ...desapostar
+                            if (distanciaCercana > 50) {
+                                if (casillaApostada != null){
+                                    actualizarFichasApostadas(fichaN, true, isOnGame = false)
+
+                                }
+                                fichaApostada.simpleAnimator.sequence {
+                                    tween(fichaApostada::pos[image.pos])
+                                    hide(fichaApostada, time = 0.1.seconds)
+                                    removeFromParent(fichaApostada)
+                                    block { objVwFichaApuestas.remove(objFicha) }
+                                }
+                                // ...desapostar
+                            } else {
+                                if (casillaApostada == null){
+                                    actualizarFichasApostadas(fichaN, false, isOnGame = false)
+                                }
+                                fichaApostada.simpleAnimator.tween(fichaApostada::pos[casillaCercana.pos])
+                                fichasApostadasObject += Chip(fichaN)
+                                bets.apostar(casillaCercana.num, Chip(fichaN))
+
+                                casillaApostada = casillaCercana.num
+                                objFicha.casilla = casillaCercana
+
+                                objVwFichaApuestas.add(objFicha)
+
+                                actualMoney -= Chip(fichaN).price
+                                println("Apostar $casillaApostada")
+
+                                println(objVwFichaApuestas[0].casilla?.num)
+                                println(objVwFichaApuestas)
+                                println(listaApuestasCantidadClones)
+                            }
+                        }
+//                        println(numVecesApuesta)
+                        elementsUser[3].setText("Dinero: ${actualMoney}$")
+                    }
+
+                }
+            }
+
+
+
+
+
+
+
+
+
+
+
+
+        image.mouse.down {
+            val fichaClon = image.clone()
+            val fichaView = FichaView(fichaClon)
+            image.parent?.addChild(fichaView.viewFicha)
+            var casillaApostada: Int? = null
+            fichaView.viewFicha.draggableCloseable { info ->
+                if (info.end) {
+                    val (distanciaCercana, casillaCercana) = coordenadas
+                        .map { it.pos.distanceTo(info.viewNextXY) to it }.minBy { it.first }
+
+                    val rango = when (casillaCercana.num) {
+                        37 -> (1..34) step 3
+                        38 -> (2..35) step 3
+                        39 -> (3..36) step 3
+                        else -> {(0 until 1)}
+                    }
+
+                    if (casillaApostada != null) {
+                        bets.desapostar(casillaCercana.num, Chip(fichaN))
+                        fichaView.eliminarConjuntoFichas(image.parent!!)
+                        println(rango)
+                        println(casillaCercana.pos.x)
+                        println(casillaCercana.pos.y)
+                        if ((casillaCercana.pos.x in 2081.0..2083.0) && (casillaCercana.pos.y in 162.0..400.0)){
+                            println("POINT GOOD")
+                        }
+                        actualMoney += Chip(fichaN).price
+
+                    }else {
+                        println("TEST1")
+                    }
+                    if (actualMoney - Chip(fichaN).price < 0) {
+                        fichaClon.removeFromParent()
+                    } else {
+                        if (distanciaCercana > 50) {
+                            if (casillaApostada != null){
+                                actualizarFichasApostadas(fichaN, true, isOnGame = false)
+                            }
+                            fichaClon.simpleAnimator.sequence {
+                                tween(fichaClon::pos[image.pos])
+                                hide(fichaClon, time = 0.1.seconds)
+                                removeFromParent(fichaClon)
+                                block { fichaView.viewFicha }
+                            }
+                        } else {
+                            if (casillaApostada == null){
+                                actualizarFichasApostadas(fichaN, false, isOnGame = false)
+                            } else {
+                                println("TEST2")
+                            }
+
+                            fichaView.coordenadas = coordenadas
+
+                            if (rango != (0 until 1)) {
+                                fichaView.aniadirConjuntoFichas(image.parent!!, rango)
+
+                            }
+                            for (i in rango) {
+                                actualMoney -= Chip(fichaN).price
+                            }
+                            fichaClon.simpleAnimator.tween(fichaClon::pos[casillaCercana.pos])
+                            bets.apostar(casillaCercana.num, Chip(fichaN))
+                            casillaApostada = casillaCercana.num
+                        }
+                        elementsUser[3].setText("Dinero: ${actualMoney}$")
+                    }
+                }
+            }
+        }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        image.mouse.down {
+            val fichaClon = image.clone()
+            val fichaView = FichaView(fichaClon)
+            fichaView.coordenadas = coordenadas
+            image.parent?.addChild(fichaView.viewFicha)
+            var casillaApostada: Int? = null
+            var isInTable = false
+            fichaView.viewFicha.draggableCloseable { info ->
+                if (info.end) {
+                    println("1 - ACABAS DE SOLTAR PIEZA")
+                    val (distanciaCercana, casillaCercana) = coordenadas
+                        .map { it.pos.distanceTo(info.viewNextXY) to it }.minBy { it.first }
+                    casillaApostada = casillaCercana.num
+                    println("2 - DistanciaCercana = $distanciaCercana CasillaCercana = ${casillaCercana.num} CasillaApostada: $casillaApostada")
+
+
+                    if (distanciaCercana > 50) {
+                        if (casillaApostada != null){
+                            desapostarFichas(fichaView, bets, casillaCercana, fichaN, image)
+                            actualizarFichasApostadas(fichaN, true, isOnGame = false)
+                            println("4 - CasillaDesapostada = $casillaApostada")
+                            // SI ENTRAMOS POR AQUI, 100% SE ACABA DE DESAPOSTAR UNA FICHA
+                        }
+                        isInTable = false
+                        fichaClon.simpleAnimator.sequence {
+                            tween(fichaClon::pos[image.pos])
+                            hide(fichaClon, time = 0.1.seconds)
+                            removeFromParent(fichaClon)
+                            block { fichaView.viewFicha }
+                        }
+                    } else {
+                        if (!isInTable){
+                            apostarFichas(fichaView, bets, casillaCercana, fichaN, image)
+                            actualizarFichasApostadas(fichaN, false, isOnGame = false)
+                            println("5 - CasillaApostada = $casillaApostada")
+                            isInTable = true
+//                            casillaApostada = -1
+                            // SI ENTRAMOS POR AQUI, SE ACABA DE APOSTAR UNA FICHA
+                        }else {
+                            actualizarFichasApostadas(fichaN, true, isOnGame = false)
+                            actualizarFichasApostadas(fichaN, false, isOnGame = false)
+                            fichaView.viewFicha.simpleAnimator.tween(fichaView.viewFicha::pos[casillaCercana.pos])
+                        }
+
+                    }
+                    // Resto de la lógica
+                    elementsUser[3].setText("Dinero: ${actualMoney}$")
+                }
+            }
+        }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                if (info.end) {
+                    println(info.viewNextXY)
+                    println("-------------------")
+                    println("InicioTabla : $tablero")
+                    println("FinTablax : ${tablero.x * 2}")
+                    println("FinTablay : ${tablero.y * 2}")
+                    println("-------------------")
+                    if (distanciaCercana < 50){
+//                        apostarFichas(fichaView, bets, casillaCercana, fichaN, image)
+                        println("2 - DistanciaCercana = $distanciaCercana CasillaCercana.X = ${casillaCercana.pos} CasillaCercana.Y = ${casillaCercana.pos} CasillaCercana = ${casillaCercana.num}")
+                    }
+                    if (distanciaCercana > 50) {
+//                        desapostarFichas(fichaView, bets, casillaCercana, fichaN, image)
+                        fichaClon.simpleAnimator.sequence {
+                            tween(fichaClon::pos[image.pos])
+                            hide(fichaClon, time = 0.1.seconds)
+                            removeFromParent(fichaClon)
+                            block { fichaView.viewFicha }
+                        }
+                    }
+
+
+
+
+
+
+
+
+
+
+
+                    val differenceX = (info.viewNextXY.x - tablero[0].x).toInt()
+                    val differenceY = (info.viewNextXY.y - tablero[0].y).toInt()
+                    if (distanciaCercana > 50) {
+                        println("Soy mayor que 50")
+                        if (differenceX in 0..1350 && differenceY in 0..500 && casillaApostada == null){
+                            println("Estoy dentro de tablero 1")
+//                            casillaApostada = casillaCercana.num
+                            println("2 - DistanciaCercana = $distanciaCercana CasillaCercana.X = ${casillaCercana.pos} CasillaCercana.Y = ${casillaCercana.pos} CasillaCercana = ${casillaCercana.num}")
+
+                        }else {
+                            fichaClon.simpleAnimator.sequence {
+                                tween(fichaClon::pos[image.pos])
+                                hide(fichaClon, time = 0.1.seconds)
+                                removeFromParent(fichaClon)
+                                block { fichaView.viewFicha }
+                            }
+                            println("Estoy fuera de tablero1")
+                            println(casillaApostada)
+                            desapostarFichas(fichaView, bets, casillaCercana, fichaN, image)
+                            println("KAKKAKA")
+                        }
+
+                    } else {
+                        if (differenceX in 0..1350 && differenceY in 0..500){
+                            println("Estoy dentro de tablero2")
+                            println(casillaApostada)
+                            apostarFichas(fichaView, bets, casillaCercana, fichaN, image)
+
+                        } else {
+                            println("2 - DistanciaCercana = $distanciaCercana CasillaCercana.X = ${casillaCercana.pos} CasillaCercana.Y = ${casillaCercana.pos} CasillaCercana = ${casillaCercana.num}")
+                            desapostarFichas(fichaView, bets, casillaCercana, fichaN, image)
+                            fichaClon.simpleAnimator.sequence {
+                                tween(fichaClon::pos[image.pos])
+                                hide(fichaClon, time = 0.1.seconds)
+                                removeFromParent(fichaClon)
+                                block { fichaView.viewFicha }
+                            }
+                            println("Estoy fuera de tablero2")
+                        }
+                        casillaApostada = casillaCercana.num
+                    }

@@ -1,4 +1,7 @@
+
+import korlibs.audio.sound.*
 import korlibs.image.bitmap.*
+import korlibs.image.color.*
 import korlibs.image.format.*
 import korlibs.io.file.std.*
 import korlibs.korge.annotations.*
@@ -9,95 +12,83 @@ import korlibs.korge.view.*
 import korlibs.korge.view.align.*
 import korlibs.korge.view.onClick
 import korlibs.math.geom.*
-import mvc.*
+import korlibs.time.*
 
-class Menu(var controller: Controller) : Scene() {
-    private var NBOTONES:Int = 3
-    private var NBOTONESARRIBA:Int= 2
-    private var userIsRegisterOrLogged:Boolean = false
+class Menu(private var sceneSwitcher: SceneSwitcher, var isJVMorJS: Boolean): Scene() {
 
     @OptIn(KorgeExperimental::class)
     override suspend fun SContainer.sceneMain() {
-        controller.getUserRealtimeDatabase()
-        var user = controller.getUser()
-        println(user)
-        if (user != null){
-            userIsRegisterOrLogged = true
-
+        val music = resourcesVfs["songs/sonidoFondoMenu.mp3"].readMusic()
+        val channel = music.play()
+        channel.sound
+        channel.volume = 0.2
+        if (sceneSwitcher.loadUser().nombreUsuario != "Invitado") {
+            sceneSwitcher.userIsRegisterOrLogged = true
         }
-        val resourceWallpaper = resourcesVfs["fondoLogin.jpg"].readBitmap()
-
-        // We load a container that will contain the background
-        container {
-            val bg = uiImage(
-                views.virtualSizeDouble,
-                resourceWallpaper.slice(),
-                scaleMode = ScaleMode.COVER,
-                contentAnchor = Anchor.CENTER
-            )
-            onStageResized { _, _ ->
-                bg.width = views.actualVirtualWidth.toDouble()
-                bg.height = views.actualVirtualHeight.toDouble()
-            }
-        }.name("Background")
+        val image = uiImage(
+            views.virtualSizeDouble,
+            resourcesVfs["backgrounds/menuBackground.jpg"].readBitmap().slice(),
+            scaleMode = ScaleMode.COVER,
+            contentAnchor = Anchor.CENTER
+        )
+        onStageResized { _, _ ->
+            image.width = views.actualVirtualWidth.toDouble()
+            image.height = views.actualVirtualHeight.toDouble()
+        }
 
 
-        val image = image(resourcesVfs["logoApp.png"].readBitmap())
+        if (get("root").isEmpty()){
+            container {
+                container {
+                    val buttonLabels = mutableListOf(
+                        "JUGAR",
+                        "RANKINGS",
+                        if (sceneSwitcher.userIsRegisterOrLogged) "LOGOUT" else "LOGIN",
+                        if (!isJVMorJS) "REGISTER" else null,
+                        "SALIR").filterNotNull()
+                    for ((index, label) in buttonLabels.withIndex()) {
 
-        //Contenedor 1 para botones de abajo
-        container {
-            val textosBotones = arrayListOf<String>("")
-            for (n in 0 until NBOTONES) {
-                val xCoordinate = 450 * n // Establecemos la cordenada x basandonos en la columna
-                val yCoordinate = (120 * (n / 4)) // Establecemos la cordenada y basandonos en la fila
+                        uiButton {
+                            text = label
+                            scale = 3.0
+                            xy(x + index * 350, 0)
+                            bgColorOut = Colors.DARKORANGE
+                            when (label) {
+                                "JUGAR" -> {
+                                    onClick {
+                                        sceneSwitcher.switchScene("game")
+                                    }
+                                }
+                                "RANKINGS" -> {
+                                    onClick {
+                                        sceneSwitcher.switchScene("rank")
+                                    }
+                                }
+                                "LOGIN" -> {
+                                    onClick {
+                                        sceneSwitcher.switchScene("login")
 
-
-                // Cargamos la imagen una a una en la vista del contenedor
-                val image = image(resourcesVfs["botonMenu.png"].readBitmap()).scale(0.60).position(xCoordinate, yCoordinate)
-                when(n) {
-                    0 -> text("JUGAR",50).xy(98, 60).onClick {
-                        if (user != null) {
-
-                            sceneContainer.changeTo { GameView(GameModel(user!!.nombreUsuario, user!!.dineroActual)) }
-                        } else {
-                            sceneContainer.changeTo{GameView(GameModel("Invitado", 100500))}
-                        }
-                    }
-                    1 -> {
-                        text(if (userIsRegisterOrLogged) "LOGOUT" else "LOGIN",50).xy(558, 60).onClick{
-                            if (userIsRegisterOrLogged) {
-                                controller.signOutUser()
-                                user = null
-                                userIsRegisterOrLogged = false
-                                sceneContainer.changeTo{Menu(controller)}
-
-                            } else {
-//                                controller.setUser("newtest@test.com", "test123")
-
-                                println("TODO: CREAR LOGIN SCENE")
-                                sceneContainer.changeTo { Login(controller) }
+                                    }
+                                }
+                                "LOGOUT" -> {
+                                    onClick {
+                                        sceneSwitcher.controller.signOutUser()
+                                        sceneSwitcher.userIsRegisterOrLogged = false
+                                        sceneSwitcher.loadNewGame()
+                                        sceneSwitcher.goMenu()
+                                    }
+                                }
+                                "REGISTER" -> {
+                                    onClick {
+                                        sceneSwitcher.switchScene("register")
+                                    }
+                                }
                             }
                         }
                     }
-                    2 -> text("SALIR",50).xy(1008, 60)
-                }
-            }
-        } .centerOnStage().y = this.scaledHeight - 200.0
+                }.name("belowButtons")
+            }.centerOnStage().name("root")
+        }
 
-        //Creamos un segundo contenedor para la parte de arriba
-        container {
-            for (n in 0 until NBOTONESARRIBA) {
-                val xCoordinate = 1300 * n // Establecemos la cordenada x basandonos en la columna
-                val yCoordinate = (1376 * (n / 4)) // Establecemos la cordenada y basandonos en la fila
-
-
-                // Cargamos la imagen una a una en la vista del contenedor
-                val image = image(resourcesVfs["botonMenu.png"].readBitmap()).scale(0.35).position(xCoordinate, yCoordinate)
-                when(n) {
-                    0 -> text("CREDITOS",30).xy(34, 34)
-                    1 -> text("RANKING",30).xy(1344, 34)
-                }
-            }
-        } .centerOnStage().y = this.scaledHeight - 950.0
     }
 }

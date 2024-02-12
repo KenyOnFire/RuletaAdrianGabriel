@@ -1,12 +1,14 @@
 import android.app.*
 import android.util.*
 import com.google.firebase.*
+import com.google.firebase.database.*
 import dev.gitlive.firebase.*
 import dev.gitlive.firebase.Firebase
 import dev.gitlive.firebase.FirebaseApp
 import dev.gitlive.firebase.FirebaseOptions
 import dev.gitlive.firebase.auth.*
 import dev.gitlive.firebase.database.*
+import dev.gitlive.firebase.database.FirebaseDatabase
 import dev.gitlive.firebase.initialize
 import korlibs.io.file.std.*
 import korlibs.io.util.*
@@ -56,12 +58,12 @@ actual object FirebaseManagerObj {
         return auth
     }
 
-    actual suspend fun getActualUserDb(): String {
+    actual suspend fun getActualUserDb(pathString: String): String {
         actualUid = auth.currentUser?.uid.toString()
 
         return try {
             val deferred = CompletableDeferred<String>()
-            val userReference = databaseRTDB.android.reference.child("users").child(actualUid).child("displayname")
+            val userReference = databaseRTDB.android.reference.child("users").child(actualUid).child(pathString)
             userReference.get().addOnSuccessListener {
                 val displayName = it.value as? String
                 Log.i("firebase", "Got value: $displayName")
@@ -77,24 +79,55 @@ actual object FirebaseManagerObj {
         }
     }
 
-    actual suspend fun createUser(email: String, displayName: String) {
-        try {
-            actualUid = auth.currentUser?.uid.toString()
-            val userReference = databaseRTDB.android.reference.child("users").child(actualUid)
-            val userData = mapOf("email" to email, "displayname" to displayName)
-
-            userReference.setValue(userData).await()
-
-            Log.i("firebase", "User created successfully")
-        } catch (e: Exception) {
-            Log.e("firebase", "Error creating user", e)
-        }
+    actual suspend fun createUser(nombreUsuario: String, dineroActual: Int, email: String) {
+        //TODO for add support in JVM (SDK TODO)
     }
+
     actual suspend fun isJVMorJS():Boolean{
         return true
     }
 
-    actual suspend fun getDisplayName() {
+    actual suspend fun getAllUsersDb(pathString: String): List<String> {
+        val usersList = mutableListOf<String>()
+        try {
+            val deferred = CompletableDeferred<List<String>>()
+            val usersReference = databaseRTDB.android.reference.child("users")
+            usersReference.addListenerForSingleValueEvent(object : ValueEventListener {
+
+                override fun onDataChange(p0: com.google.firebase.database.DataSnapshot) {
+                    for (userSnapshot in p0.children) {
+                        val displayName = userSnapshot.child(pathString).getValue(String::class.java)
+                        Log.i("firebase", "Got value: $displayName")
+                        displayName?.let { usersList.add(it) }
+                    }
+                    deferred.complete(usersList)
+                }
+
+                override fun onCancelled(error: DatabaseError) {
+                    Log.e("firebase", "Error getting data", error.toException())
+                    deferred.completeExceptionally(error.toException())
+                }
+            })
+            return deferred.await()
+        } catch (e: Exception) {
+            Log.e("firebase", "Error in getAllUsersDb", e)
+            return emptyList()
+        }
     }
+
+    actual suspend fun modifyActualMoney(money: String) {
+        try {
+            val actualUid = auth.currentUser?.uid.toString()
+            val userReference = databaseRTDB.android.reference.child("users").child(actualUid)
+            val updates = HashMap<String, Any>()
+            updates["actualMoney"] = money
+            userReference.updateChildren(updates).await()
+            Log.i("firebase", "actualMoney updated successfully to $money")
+        } catch (e: Exception) {
+            Log.e("firebase", "Error modifying actualMoney", e)
+        }
+    }
+
+
 }
 
