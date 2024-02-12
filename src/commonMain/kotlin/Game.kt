@@ -305,10 +305,10 @@ class Game(private var sceneSwitcher: SceneSwitcher) : Scene() {
                 val imgPlay = image(gameResources.botonPlay).xy(10,120)
                 if (!ruletaActiva){
                     imgPlay.onClick {
-                        val sound = resourcesVfs["songs/roulletteSpin.mp3"].readSound()
-                        val channel = sound.play()
-                        channel.sound
-                        channel.volume = 0.1
+//                        val sound = resourcesVfs["songs/roulletteSpin.mp3"].readSound()
+//                        val channel = sound.play()
+//                        channel.sound
+//                        channel.volume = 0.1
                         ruletaActiva = true
                         for (i in fichaViewLista) {
                             fichasApostadas.removeChild(i.viewFicha)
@@ -320,23 +320,30 @@ class Game(private var sceneSwitcher: SceneSwitcher) : Scene() {
                         delay(500.milliseconds)
                         updateScores(result.second)
                         sceneSwitcher.controller.modifyMoneyUser(actualMoney)
-                        actualizarFichasApostadas(index, true, isOnGame = true)
+                        for (i in 0..7) {
+                            actualizarFichasApostadas(i, true, isOnGame = true)
+                        }
+
                         for (n in 0 until GameModel.NCASILLAS) {
                             bets.retirarApuestas(n)
                         }
                         for (i in fichaViewLista) {
                             i.eliminarConjuntoFichas(this)
-                            fichasApostadas.removeChild(i.viewFicha)
+                            println(i.viewFicha.name)
+                            if (i.viewFicha.name != null){
+                                fichasApostadas.removeChild(i.viewFicha)
+                            }
+
                         }
                         actualizarHistorial(result.first) // Num Winner
-                        fichasApostadas.forEachChild {
-                            if (it.index > 7) {
-                                println(it.index)
-                                println(it.name)
-                                fichasApostadas.removeChild(it)
+                        //fichasApostadas.forEachChild {
+                        //    if (it.index > 7) {
+                        //        println(it.index)
+                        //        println(it.name)
+                        //        fichasApostadas.removeChild(it)
 
-                            }
-                        }
+                        //    }
+                        //}
                         ruletaActiva = false
                     }
                 }
