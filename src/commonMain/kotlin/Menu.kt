@@ -61,7 +61,8 @@ class Menu(private var sceneSwitcher: SceneSwitcher, var isJVMorJS: Boolean): Sc
                                 }
                                 "RANKINGS" -> {
                                     onClick {
-                                        sceneSwitcher.controller.getAllUsers()
+                                        sceneSwitcher.removeScene("rank")
+                                        sceneSwitcher.addScene("rank", Rankings(sceneSwitcher))
                                         sceneSwitcher.switchScene("rank")
                                     }
                                 }
