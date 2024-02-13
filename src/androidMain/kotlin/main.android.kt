@@ -117,6 +117,7 @@ actual object FirebaseManagerObj {
             return emptyList()
         }
     }
+
     actual suspend fun modifyActualMoney(money: String) {
         try {
             val actualUid = auth.currentUser?.uid.toString()

@@ -22,8 +22,11 @@ suspend fun main() = Korge(
 //    sceneContainer().changeTo{Game(sceneSwitcher)}//DEBUG
 
     sceneSwitcher.addScene("game", Game(sceneSwitcher))
+    println("game")
     sceneSwitcher.addScene("rank", Rankings(sceneSwitcher))
+    println("rank")
     sceneSwitcher.addScene("login", Login(sceneSwitcher))
+    println("login")
     sceneSwitcher.addScene("register", Register(sceneSwitcher))
     sceneSwitcher.goMenu()
 }

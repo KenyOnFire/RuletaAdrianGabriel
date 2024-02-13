@@ -8,6 +8,7 @@ import korlibs.korge.view.align.*
 import korlibs.math.geom.*
 import dev.gitlive.firebase.auth.*
 import mvc.*
+import kotlin.time.Duration.Companion.seconds
 
 class Login(
     private var sceneSwitcher: SceneSwitcher
@@ -15,9 +16,11 @@ class Login(
     @OptIn(KorgeExperimental::class)
     override suspend fun SContainer.sceneMain() {
         container {
+            text("E-Mail: ", color = Colors.WHITE).position(0,-50).scale(2.5)
             val emailInput = uiTextInput("", Size(500, 75)).position(0,0)
             emailInput.scale = 1.5
             emailInput.textSize = 40.0
+            text("Password: ", color = Colors.WHITE).position(0,150).scale(2.5)
             val password = uiTextInput("", Size(500, 75)).position(0,200)
             password.scale = 1.5
             password.textSize = 40.0
@@ -26,11 +29,17 @@ class Login(
             login.position((this.width-login.width)/2,this.height+login.height)
             login.textSize = 33.0
             login.onClick {
-                sceneSwitcher.controller.setUser(emailInput.text, password.text) // DEBUG
-                sceneSwitcher.controller.getUserRealtimeDatabase()
-                sceneSwitcher.userIsRegisterOrLogged = true
-                sceneSwitcher.loadNewGame()
-                sceneSwitcher.goMenu()
+                if (password.text.length <= 6) {
+                    val newText = text("La password debe tener minimo 6 caracteres", color = Colors.RED).position(0,550).scale(2.2)
+                    delay(4.seconds)
+                    this.removeChild(newText)
+                } else {
+                    sceneSwitcher.controller.setUser(emailInput.text, password.text) // DEBUG
+                    sceneSwitcher.controller.getUserRealtimeDatabase()
+                    sceneSwitcher.userIsRegisterOrLogged = true
+                    sceneSwitcher.loadNewGame()
+                    sceneSwitcher.goMenu()
+                }
             }
         }.centerOnStage()
         uiButton {

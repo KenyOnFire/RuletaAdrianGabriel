@@ -18,10 +18,10 @@ class Menu(private var sceneSwitcher: SceneSwitcher, var isJVMorJS: Boolean): Sc
 
     @OptIn(KorgeExperimental::class)
     override suspend fun SContainer.sceneMain() {
-        val music = resourcesVfs["songs/sonidoFondoMenu.mp3"].readMusic()
-        val channel = music.play()
-        channel.sound
-        channel.volume = 0.2
+        //val music = resourcesVfs["songs/sonidoFondoMenu.mp3"].readMusic()
+        //val channel = music.play()
+        //channel.sound
+        //channel.volume = 0.2
         if (sceneSwitcher.loadUser().nombreUsuario != "Invitado") {
             sceneSwitcher.userIsRegisterOrLogged = true
         }
@@ -61,6 +61,7 @@ class Menu(private var sceneSwitcher: SceneSwitcher, var isJVMorJS: Boolean): Sc
                                 }
                                 "RANKINGS" -> {
                                     onClick {
+                                        sceneSwitcher.controller.getAllUsers()
                                         sceneSwitcher.switchScene("rank")
                                     }
                                 }

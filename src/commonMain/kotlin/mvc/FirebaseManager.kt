@@ -13,7 +13,7 @@ class FirebaseManager(val auth: FirebaseAuth) {
         }
         val displayName = FirebaseManagerObj.getActualUserDb("displayname")
         val actualMoney = FirebaseManagerObj.getActualUserDb("actualMoney")
-        user = Usuario(displayName, actualMoney.toInt())
+        user = Usuario(if (displayName == "") "Invitado" else displayName, if(actualMoney == "") 100000 else actualMoney.toInt())
         return user
     }
 
