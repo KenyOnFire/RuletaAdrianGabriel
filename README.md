@@ -7,7 +7,7 @@ This project is made by Adrián and Gabriel for the Multimedia Programming and M
 ## Authors
 
 - [@KenyOnFire🥷👨‍💻](https://www.github.com/KenyOnFire)
-- [@AdrianQR🐺🧑‍💻](https://www.github.com/https://github.com/AdrianQR01)
+- [@AdrianQR🐺🧑‍💻](https://github.com/AdrianQR01)
 
 
 
